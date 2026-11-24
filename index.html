@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Xếp thời khóa biểu</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top">
+  <div>
+    <h1>Xếp thời khóa biểu</h1>
+    <p id="tieu-de" class="muted"></p>
+  </div>
+  <div class="tong" id="tong"></div>
+</header>
+
+<main class="khung">
+  <aside class="trai">
+    <section class="the">
+      <h2>Tìm môn</h2>
+      <input id="tim" type="search" placeholder="Tên môn hoặc mã môn…" autocomplete="off">
+      <div class="hang">
+        <select id="nganh" aria-label="Ngành" title="Ngành lấy từ mã lớp (vd 16DHTH01 → ngành DHTH, khóa 16). Chọn ngành thì danh sách môn lọc theo ngành."><option value="">Mọi ngành</option></select>
+        <select id="khoa-n" aria-label="Khóa"><option value="">Mọi khóa</option></select>
+        <button id="them-nganh" class="phu" title="Thêm mọi môn mở cho ngành / khóa này, chưa chọn lớp học phần (bấm Tự xếp để chọn)">Thêm môn ngành</button>
+      </div>
+      <ul id="ket-qua" class="ket-qua"></ul>
+    </section>
+
+    <section class="the">
+      <div class="hang giua">
+        <h2>Môn đã chọn</h2>
+        <span class="dan"></span>
+        <button id="xoa-het" class="nhe">Xóa hết</button>
+      </div>
+      <ul id="da-chon" class="da-chon"></ul>
+      <p id="trong" class="muted">Chưa chọn môn nào. Tìm môn ở trên rồi bấm để thêm.</p>
+    </section>
+
+    <section class="the">
+      <h2>Tự xếp</h2>
+      <p class="muted nho">Thử mọi tổ hợp lớp học phần của các môn đã chọn, không trùng lịch, ưu tiên ít ngày phải đến trường. Môn đã khóa 🔒 giữ nguyên.</p>
+      <div class="nhom">
+        <span class="nhan">Ngày được đi học <span class="muted">(tự xếp chỉ đặt lớp vào các ngày đã tích)</span></span>
+        <div id="ngay-hoc" class="chips"></div>
+      </div>
+      <div class="nhom">
+        <span class="nhan">Tránh buổi</span>
+        <div id="tranh-buoi" class="chips"></div>
+      </div>
+      <div class="nhom">
+        <span class="nhan">Khung giờ được học <span class="muted">(buổi bắt đầu sớm hơn / kết thúc muộn hơn bị loại; để trống = không giới hạn)</span></span>
+        <div class="hang khung-gio">
+          <input type="time" id="gio-tu" step="300" aria-label="Bắt đầu sớm nhất"> <span>–</span>
+          <input type="time" id="gio-den" step="300" aria-label="Kết thúc muộn nhất">
+          <button id="gio-bo" class="nhe" title="Bỏ giới hạn giờ">Bỏ</button>
+        </div>
+      </div>
+      <label class="tick"><input type="checkbox" id="uu-tien-nganh"> Ưu tiên lớp học phần cùng ngành (ngành / khóa chọn ở Tìm môn)</label>
+      <div class="nhom">
+        <span class="nhan">Ưu tiên giáo viên <span class="muted">(tích được nhiều; mỗi môn đúng GV được ưu tiên bằng nửa ngày đến trường; rê chuột để xem môn)</span></span>
+        <input type="search" id="gv-loc" placeholder="Lọc tên giáo viên…" autocomplete="off" aria-label="Lọc tên giáo viên" hidden>
+        <div id="gv-uu" class="chips gv-uu"></div>
+      </div>
+      <label class="tick">Cách xếp
+        <select id="cach-xep"><option value="it">Ít ngày đến trường nhất</option><option value="deu">Dàn đều các ngày</option></select></label>
+      <button id="tu-xep" class="chinh">Tự xếp</button>
+      <div id="phuong-an" class="phuong-an"></div>
+    </section>
+  </aside>
+
+  <section class="phai">
+    <div class="thanh">
+      <button id="tuan-truoc" class="nhe" aria-label="Tuần trước">‹</button>
+      <select id="tuan"></select>
+      <button id="tuan-sau" class="nhe" aria-label="Tuần sau">›</button>
+      <span class="dan"></span>
+      <button id="chep-ma" class="phu">Chép mã LHP</button>
+      <button id="in" class="phu">In</button>
+    </div>
+    <div id="luoi" class="luoi"></div>
+    <p class="muted nho chu-thich">Ô viền đỏ là trùng lịch; nhãn "khác tuần" (khi xem Cả học kỳ) là cùng giờ nhưng học ở tuần khác, không trùng. Cột Tiết ghi giờ bắt đầu theo bảng giờ lý thuyết; buổi thực hành / phòng máy / thí nghiệm / GDQP / GDTC dùng bảng giờ riêng (đoán theo tên môn và phòng), giờ thật ghi trên từng khối. Rê chuột lên một lớp học phần trong danh sách để xem trước trên lưới.</p>
+  </section>
+</main>
+
+<div id="bao" class="bao" role="status"></div>
+<script src="data/data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
