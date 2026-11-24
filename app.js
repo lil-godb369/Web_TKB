@@ -99,12 +99,13 @@ const phongChu = (set) => { const a = [...set].map((p) => p.replace(/ - .*$/, ""
 const coSo = (set) => [...new Set([...set].map((p) => (p.split(" - ").slice(1).pop() || "").replace(/^.*_\s*/, "").split(",")[0].trim()).filter(Boolean))].join("; ");
 
 // ---------- trạng thái ----------
-let st = { chon: [], lop: "", tuan: -1, hoc: [2, 3, 4, 5, 6, 7], tranh: [], uuLop: false, khung: ["", ""], gv: [], nganh: "", khoaN: "", uuNganh: false, cach: "it" };
+let st = { chon: [], lop: "", tuan: -1, hoc: [2, 3, 4, 5, 6, 7], tranh: [], uuLop: false, khung: ["", ""], gv: [], gvTranh: [], nganh: "", khoaN: "", uuNganh: false, cach: "it" };
 try { Object.assign(st, JSON.parse(localStorage.getItem(KHOA)) || {}); } catch { /* bỏ */ }
 // Bản cũ lưu "ngày muốn nghỉ" (st.nghi) → đổi sang "ngày được đi học" = các ngày không nghỉ.
 if (Array.isArray(st.nghi)) { st.hoc = [2, 3, 4, 5, 6, 7, 8].filter((t) => !st.nghi.includes(t)); delete st.nghi; }
 if (!Array.isArray(st.hoc)) st.hoc = [2, 3, 4, 5, 6, 7];
 if (!Array.isArray(st.gv)) st.gv = [];
+if (!Array.isArray(st.gvTranh)) st.gvTranh = [];
 st.lop = ""; st.uuLop = false; // đã bỏ ô lớp; ngành / khóa thay thế
 st.chon = st.chon.filter((c) => MON_MAP.has(c.m) && (!c.s || SEC.has(c.s)));
 let moRong = new Set(), xemTruoc = null, phuongAn = null;
@@ -112,6 +113,7 @@ const luu = () => localStorage.setItem(KHOA, JSON.stringify(st));
 const mauMon = (ma) => { const i = st.chon.findIndex((c) => c.m === ma); return MAU[(i < 0 ? 0 : i) % MAU.length]; };
 const TAT_GV = new Set([...SEC.values()].map((s) => s.gv));
 const gvUu = (s) => st.gv.includes(s.gv);
+const gvTranh = (s) => st.gvTranh.includes(s.gv);
 const hopNganh = (l) => { const t = st.nganh && tachLop(l); return !!t && t.nganh === st.nganh && (!st.khoaN || t.khoa === st.khoaN); };
 const cungNganh = (s) => hopNganh(s.lop);
 const daChonSec = () => st.chon.filter((c) => c.s).map((c) => SEC.get(c.s));
@@ -178,7 +180,7 @@ function veDaChon() {
 function veLuaChon(c, m, khac, lop) {
   const box = el("div", { class: "lua-chon", onmouseleave: () => { xemTruoc = null; veLuoi(); } });
   const ds = m.ds.map((s) => ({ s, t: khac.filter((x) => trung(s, x)) }))
-    .sort((a, b) => (b.s.lop === lop) - (a.s.lop === lop) || gvUu(b.s) - gvUu(a.s) || cungNganh(b.s) - cungNganh(a.s) || a.t.length - b.t.length || a.s.ma.localeCompare(b.s.ma));
+    .sort((a, b) => (b.s.lop === lop) - (a.s.lop === lop) || gvTranh(a.s) - gvTranh(b.s) || gvUu(b.s) - gvUu(a.s) || cungNganh(b.s) - cungNganh(a.s) || a.t.length - b.t.length || a.s.ma.localeCompare(b.s.ma));
   for (const { s, t } of ds) {
     const lich = gopBuoi(s).map((g) => el("div", {}, `${thuChu(g.thu)}, ${gioChu(g.bang, g.tu, g.den)} (tiết ${g.tu}–${g.den}) · tuần ${tuanChu(g.mask)} · ${phongChu(g.phong)}`));
     box.append(el("label", { class: t.length ? "trung" : "", onmouseenter: () => { xemTruoc = s.ma === c.s ? null : s.ma; veLuoi(); } },
@@ -189,6 +191,7 @@ function veLuaChon(c, m, khac, lop) {
           s.lop === lop ? el("span", { class: "nhan-nho lop-minh" }, "lớp bạn") : null,
           s.lop !== lop && cungNganh(s) ? el("span", { class: "nhan-nho lop-minh" }, "cùng ngành") : null,
           gvUu(s) ? el("span", { class: "nhan-nho lop-minh" }, "GV ưu tiên") : null,
+          gvTranh(s) ? el("span", { class: "nhan-nho do" }, "GV đang tránh") : null,
           s.el ? el("span", { class: "nhan-nho" }, "E-learning") : null,
           t.length ? el("span", { class: "nhan-nho do" }, "trùng " + t.map((x) => MON_MAP.get(x.mon).ten).join(", ")) : null),
         el("div", { class: "lich" }, lich, el("div", {}, coSo(new Set(s.b.map((x) => x.phong))))))));
@@ -285,13 +288,21 @@ function veGv() {
   const co = new Map(); // GV -> tên các môn đã chọn GV đó dạy
   for (const c of st.chon) { const m = MON_MAP.get(c.m);
     for (const s of m.ds) if (s.gv !== "(chưa có GV)") { if (!co.has(s.gv)) co.set(s.gv, new Set()); co.get(s.gv).add(m.ten); } }
-  st.gv.forEach((g) => co.has(g) || co.set(g, new Set()));
+  [...st.gv, ...st.gvTranh].forEach((g) => co.has(g) || co.set(g, new Set()));
   const loc = boDau($("#gv-loc").value.trim());
   $("#gv-loc").hidden = co.size <= 12;
-  const ds = [...co.keys()].sort((a, b) => a.localeCompare(b, "vi")).filter((g) => !loc || st.gv.includes(g) || boDau(g).includes(loc));
-  $("#gv-uu").replaceChildren(...(co.size ? ds.map((g) => el("label", { title: [...co.get(g)].join(", ") || "Không dạy môn nào đang chọn" },
-    el("input", { type: "checkbox", checked: st.gv.includes(g),
-      onchange: (e) => { st.gv = e.target.checked ? [...st.gv, g] : st.gv.filter((x) => x !== g); luu(); veDaChon(); } }), g))
+  const ds = [...co.keys()].sort((a, b) => a.localeCompare(b, "vi")).filter((g) => !loc || st.gv.includes(g) || st.gvTranh.includes(g) || boDau(g).includes(loc));
+  const doi = () => { phuongAn = null; luu(); veGv(); veDaChon(); veTuXep(); };
+  // Mỗi GV: bấm tên = ưu tiên; bấm ⛔ = tránh (không xếp lớp GV đó). Hai trạng thái loại trừ nhau.
+  $("#gv-uu").replaceChildren(...(co.size ? ds.map((g) => { const tr = st.gvTranh.includes(g);
+    return el("label", { class: tr ? "tranh" : "", title: (tr ? "Đang tránh · " : "") + ([...co.get(g)].join(", ") || "Không dạy môn nào đang chọn") },
+      el("input", { type: "checkbox", checked: st.gv.includes(g),
+        onchange: (e) => { st.gv = e.target.checked ? [...st.gv, g] : st.gv.filter((x) => x !== g);
+          if (e.target.checked) st.gvTranh = st.gvTranh.filter((x) => x !== g); doi(); } }), g,
+      el("button", { type: "button", class: "nut-tranh", title: tr ? "Bỏ tránh giáo viên này" : "Tránh giáo viên này (không xếp lớp của GV này)", "aria-pressed": String(tr),
+        onclick: (e) => { e.preventDefault(); e.stopPropagation();
+          st.gvTranh = tr ? st.gvTranh.filter((x) => x !== g) : [...st.gvTranh, g];
+          if (!tr) st.gv = st.gv.filter((x) => x !== g); doi(); } }, "⛔")); })
     : [el("span", { class: "muted nho" }, "Chọn môn trước để hiện giáo viên.")]));
 }
 // Lý do một LHP bị loại khi tự xếp ([] = hợp lệ); `co` = các LHP của môn đã khóa.
@@ -308,6 +319,7 @@ function lyDoLoai(s, co = []) {
   if (ngay.size) r.push(`học ${[...ngay].join(", ")} (không tích đi học)`);
   if (buoi.size) r.push(`có buổi ${[...buoi].join(", ")} (đang tránh)`);
   if (khung) r.push("ra ngoài khung giờ");
+  if (gvTranh(s)) r.push(`GV ${s.gv} (đang tránh)`);
   const tr = co.filter((x) => trung(s, x));
   if (tr.length) r.push(`trùng môn đã khóa ${tr.map((x) => MON_MAP.get(x.mon).ten).join(", ")}`);
   return r;

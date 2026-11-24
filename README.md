@@ -12,7 +12,7 @@ Web tĩnh giúp sinh viên chọn môn và tự xếp thời khóa biểu từ T
   - Ít ngày đến trường nhất
   - Dàn đều các ngày
   
-  Có thể giới hạn khung giờ và lọc theo tên giảng viên.
+  Có thể chọn ngày đi học, tránh buổi, giới hạn khung giờ; **ưu tiên** hoặc **tránh giáo viên** (bấm ⛔ để không xếp lớp của GV đó).
 - **Lưới tuần:** xem từng tuần (mặc định tuần đầu có học) hoặc **Cả học kỳ**; ô trùng giờ tô đỏ, ô chồng giờ nhưng khác tuần ghi nhãn "khác tuần".
 - **Chép mã LHP** để đăng ký, **In** thời khóa biểu.
 - Lựa chọn được lưu trong trình duyệt (`localStorage`), tải lại trang không mất.
